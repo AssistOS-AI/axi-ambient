@@ -23,6 +23,9 @@ Deschide `demo.html` direct în browser (sau printr-un static server) și vei av
 - `setAscii(ascii)`
 - `setMessage(text)`
 - `setShape(name)`
+- `setPoints(points)`
+- `run(command, payload)` (control indirect)
+- `getState()`
 - `startCycle()`
 - `converge()`
 - `hold()`
@@ -36,3 +39,25 @@ Deschide `demo.html` direct în browser (sau printr-un static server) și vei av
 
 - `axi-ambient.mjs` — componenta completă (single-file, fără dependențe)
 - `demo.html` — pagină statică de test (blackboard + butoane pentru toate funcționalitățile)
+- `docs/SPEC.md` — specificația implementată
+- `docs/DS.md` — design summary și decizii
+- `docs/COVERAGE.md` — review de acoperire vs cerințe
+
+## Reutilizare indirectă (framework / orchestrator friendly)
+
+Pe elementul `<axi-ambient>`, poți trimite comenzi fără apel direct de metode:
+
+```js
+el.dispatchEvent(new CustomEvent("axi-command", {
+  detail: { command: "explode" },
+  bubbles: true
+}));
+```
+
+Evenimente emise de componentă:
+
+- `axi-ambient:ready`
+- `axi-ambient:phase-change`
+- `axi-ambient:config-change`
+- `axi-ambient:command-result`
+- `axi-ambient:destroyed`

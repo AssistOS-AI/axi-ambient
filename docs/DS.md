@@ -35,6 +35,16 @@ Pentru host frameworks (React/Vue/Svelte/Angular, orchestratori no-code, plugin 
 
 Avantaj: tehnologia target nu depinde de referințe directe la metode în fiecare loc; poate controla componenta printr-un adapter generic.
 
+### Adapter pattern recomandat
+
+Un adapter pentru tehnologia target ar trebui să ofere:
+
+- `send(command, payload)` -> emite `axi-command`
+- `subscribePhase(cb)` -> ascultă `axi-ambient:phase-change`
+- `getSnapshot()` -> apelează `getState()`
+
+Astfel, UI-ul host rămâne decuplat de detaliile de implementare internă.
+
 ## 4. Siguranță operațională
 
 - Lifecycle idempotent (`connected/disconnected/destroy`)

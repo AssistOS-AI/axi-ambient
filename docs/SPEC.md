@@ -79,6 +79,13 @@ Compoziție alpha efectiv:
 
 ## API indirect pentru tehnologii target
 
+Contractul de control indirect este stabil și versionabil (v1):
+
+- namespace comenzi: `axi-command`
+- namespace telemetrie: `axi-ambient:*`
+- payload comenzi: `{ command: string, payload?: unknown }`
+- rezultat comandă: `{ command, accepted }`
+
 ### Comenzi via event
 
 Pe element:
@@ -107,6 +114,14 @@ Pe element:
 - `theme`
 - `paused`
 - `config` (JSON)
+
+## Compatibilitate și consum indirect
+
+Componenta poate fi controlată:
+
+1. direct, prin referință DOM + metode
+2. indirect, prin event bus (recomandat pentru adaptoare framework)
+3. declarativ, prin atribute + `config` JSON
 
 ## Performanță
 
