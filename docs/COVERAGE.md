@@ -1,29 +1,46 @@
-# Review de acoperire vs cerințe inițiale
+# Coverage Review — axi-ambient + agent-blackboard
 
-Legenda: **Complet** / **Parțial** / **Gap**
+## axi-ambient
 
-| Cerință | Status | Observații |
-|---|---|---|
-| Single-file `.mjs`, zero dependențe | **Complet** | `axi-ambient.mjs` fără importuri externe |
-| Shadow DOM + Canvas + slot overlay | **Complet** | Implementat în `AxiAmbientElement` |
-| Particule random -> converge -> hold -> explode | **Complet** | State machine + forțe pe faze |
-| Stare `return` explicită | **Complet** | Adăugată (`explode -> return -> chaos`) |
-| Target ASCII (prim-cetățean) | **Complet** | parser ASCII + `densityMode` + `charMap` |
-| Target text / shape / points | **Complet** | toate implementate |
-| `svg-raster` target | **Gap** | menținut ca extensie viitoare |
-| Hold modes (`static/jitter/orbit/flow-on-shape`) | **Complet** | toate disponibile |
-| Explosion modes (`radial/normal/random/directional/burst-wave`) | **Complet** | `normal` mapat la `radial` |
-| Control dimensiune particule | **Complet** | min/max/distribution + multipliers hold/explode |
-| Control culoare particule | **Complet** | fixed/random-palette/gradient/by-state + palete pe state |
-| Alpha field global + alpha masks | **Complet** | vertical/horizontal/radial/linear + feather |
-| Formula alpha efectivă pe randare | **Complet** | aplicată per particulă în renderer |
-| API declarativ (atribute) | **Complet** | + `config` JSON attribute |
-| API programatic public | **Complet** | plus `setPoints`, `run`, `getState` |
-| Observere performanță + DPR cap | **Complet** | ResizeObserver, IntersectionObserver, DPR <= 2 |
-| prefers-reduced-motion | **Parțial** | `auto/reduce/static/off` funcționale; fallback semantic e documentat |
-| Demo static cu butoane pentru funcționalități | **Complet** | `demo.html` acoperă metode/mode/presets |
-| Reutilizare indirectă în tehnologie target | **Complet** | command/event contract + state snapshot |
+| Cerință | Status |
+|---------|--------|
+| Single-file, zero dependencies | Complet |
+| Canvas 2D rendering | Complet |
+| State machine (chaos/converge/hold/explode/return) | Complet |
+| Target modes (ascii/text/shape/points) | Complet |
+| Alpha field (vertical/horizontal/radial/linear) | Complet |
+| Alpha masks cu feather | Complet |
+| Pointer interaction | Complet |
+| prefers-reduced-motion | Parțial |
+| Custom events (ready/phase-change/config-change) | Complet |
+| Indirect command bus (axi-command) | Complet |
+| Declarative attributes | Complet |
+| Public API (configure/setAscii/setMessage/etc.) | Complet |
+| svg-raster target | Gap — planificat |
 
-## Concluzie
+## agent-blackboard
 
-Implementarea acoperă toate cerințele esențiale din specificație. Gap-ul principal rămas este `svg-raster`, care este deja delimitat ca extensie următoare fără impact pe API-ul existent.
+| Cerință | Status |
+|---------|--------|
+| Single-file, zero dependencies | Complet |
+| Scene cu 6 straturi | Complet |
+| 15 tipuri de obiecte | Complet |
+| 50+ operații suportate | Complet |
+| 12 tranziții vizuale | Complet |
+| 7 teme vizuale | Complet |
+| Protocol blackboard:agentId:userId:payload | Complet |
+| User action emission | Complet |
+| MiniSDK fluent API | Complet |
+| SVG sanitizare | Complet |
+| axi-ambient integration | Complet |
+| YouTube embed | Complet |
+| Timer cu countdown/cronometru | Complet |
+| Input (text/choice/vote/reaction) | Complet |
+| Liste cu itemi ascunși/reveal | Complet |
+| Tabele cu sortare | Complet |
+| Progress bar | Complet |
+| TTL auto-delete | Complet |
+| Atomic batch mode | Complet |
+| WebMeet interceptor | Gap — planificat |
+| Asset management extern | Gap — planificat |
+| Export imagine real | Gap — planificat |

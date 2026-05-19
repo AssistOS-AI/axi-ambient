@@ -135,3 +135,149 @@ Componenta poate fi controlată:
 
 - respectă `prefers-reduced-motion` când `motion: "auto"`
 - modurile `reduce/static/off` se configurează prin `configure({ motion })`
+
+---
+
+# agent-blackboard — Specificație implementată (v1)
+
+## Obiectiv
+
+`<agent-blackboard>` este un Web Component standalone, livrat în `agent-blackboard.mjs`, fără dependențe externe, care oferă o suprafață vizuală partajată controlată de agenți AI prin mesaje tehnice în chatul WebMeet.
+
+## Distribuție și integrare
+
+- Single-file: `agent-blackboard.mjs`
+- Fără build obligatoriu
+- Fără framework obligatoriu
+- Integrare programatică + protocol text
+
+## Contract de control
+
+Formatul protocolului:
+
+```
+blackboard:<agentId>:<userId>:<base64url(JSON)>
+```
+
+| Câmp | Descriere |
+|------|-----------|
+| agentId | Identificatorul agentului |
+| userId | Participantul țintă (gol = blackboard comun) |
+| base64url(JSON) | Payload cu comenzi vizuale |
+
+Exemple:
+- `blackboard:socrates::PAYLOAD` — blackboard comun
+- `blackboard:socrates:user-ana:PAYLOAD` — blackboard individual
+
+## Model intern
+
+- `SceneManager` — gestionare scenă, obiecte, straturi
+- `ThemeManager` — teme vizuale prin CSS variables
+- `TransitionEngine` — animații și tranziții
+- `AgentBlackboardElement` — lifecycle, API public, protocol parsing
+
+## Straturi vizuale
+
+| Strat | Conținut |
+|-------|----------|
+| background | Fundaluri, culori, imagini ambientale |
+| media | YouTube, imagini, capturi, embeds |
+| vector | SVG-uri, linii, săgeți, forme |
+| text | Titluri, subtitrări, explicații |
+| ui | Timer-e, tabele, liste, inputuri |
+| overlay | Highlight-uri, efecte, elemente temporare |
+
+## Tipuri de obiecte
+
+`text`, `box`, `image`, `svg`, `line`, `arrow`, `rect`, `circle`, `path`, `table`, `list`, `timer`, `progress`, `iframe`, `input`
+
+## Operații suportate
+
+### Scenă
+`scene.clear`, `scene.clearLayer`, `scene.theme`, `scene.background`, `scene.layout`, `scene.exportImage`, `scene.restore`
+
+### Obiecte
+`object.create`, `object.update`, `object.move`, `object.resize`, `object.transform`, `object.hide`, `object.show`, `object.delete`
+
+### Text
+`text.show`, `text.update`, `text.append`, `text.highlight`, `text.clear`
+
+### Forme
+`shape.line`, `shape.arrow`, `shape.rect`, `shape.circle`, `shape.path`, `shape.update`
+
+### SVG
+`svg.show`, `svg.replace`, `svg.highlight`, `svg.zoom`, `svg.pan`
+
+### Media
+`image.show`, `image.replace`, `image.highlight`, `screenshot.show`, `youtube.load`, `youtube.play`, `youtube.segment`, `youtube.pause`, `youtube.seek`, `media.caption`, `media.remove`
+
+### Liste și tabele
+`list.show`, `list.add`, `list.update`, `list.reveal`, `list.remove`, `table.show`, `table.updateRow`, `table.updateCell`, `table.sort`
+
+### Timer și progres
+`timer.show`, `timer.start`, `timer.pause`, `timer.resume`, `timer.stop`, `timer.reset`, `progress.show`, `progress.update`
+
+### Input
+`input.text`, `input.privateText`, `input.choice`, `input.multiChoice`, `input.vote`, `input.reaction`, `input.close`, `input.status`, `input.clear`
+
+## Tranziții
+
+`fadeIn`, `fadeOut`, `slideIn`, `slideOut`, `scaleIn`, `scaleOut`, `smoothMove`, `typewriter`, `draw`, `pulse`, `flash`, `shake`
+
+## Teme vizuale
+
+`formal`, `playful`, `quiz`, `court`, `mystery`, `classroom`, `minimal`
+
+## API public
+
+- `clear()`, `clearLayer(layer)`
+- `setTheme(name)`, `setBackground(params)`, `setLayout(name)`
+- `applyCommand(cmd)`, `applyCommands(payload)`
+- `processProtocolLine(line)`
+- `getState()`, `destroy()`
+- `setupAmbient(options)`, `removeAmbient()`, `showAmbient()`, `hideAmbient()`
+
+## Evenimente
+
+- `blackboard:ready`
+- `blackboard:action` — acțiuni utilizator (input, choice, vote, reaction)
+- `blackboard:export` — cerere export imagine
+- `blackboard:destroyed`
+
+## MiniSDK
+
+Funcția `createBlackboardSDK(agentId, options)` produce un obiect SDK cu API fluent:
+
+```js
+const sdk = createBlackboardSDK("socrates");
+sdk.clear()
+  .theme("quiz")
+  .text("title", "Quiz Time!", { geometry: { x: 40, y: 20 }, style: { fontSize: "32px" } })
+  .timer("timer", 60, { geometry: { x: 40, y: 80 } })
+  .askChoice("answer", "Choose:", { options: ["A", "B", "C"] })
+  .applyTo(blackboardEl);
+```
+
+SAU emite linie protocol:
+
+```js
+const line = sdk.emit(); // "blackboard:socrates::base64url..."
+```
+
+## Integrare cu axi-ambient
+
+`<agent-blackboard>` poate include `<axi-ambient>` ca fundal animat:
+
+```js
+bb.setupAmbient({ effect: "ambient", density: 500, speed: 0.7 });
+bb.hideAmbient();
+bb.showAmbient();
+bb.removeAmbient();
+```
+
+## Securitate
+
+- SVG sanitizare strictă (script-uri, event handlers, foreignObject eliminate)
+- HTML arbitrar nu se execută
+- Validare operații cunoscute
+- Payload JSON validat
