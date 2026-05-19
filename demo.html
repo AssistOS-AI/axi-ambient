@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>axi-ambient demo</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, sans-serif;
+        background: #020617;
+        color: #e2e8f0;
+      }
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      .board {
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 24px 70px rgba(2, 6, 23, 0.55);
+      }
+      axi-ambient {
+        display: block;
+        min-height: 620px;
+        background:
+          radial-gradient(circle at 30% 20%, rgba(56, 189, 248, 0.12), transparent 42%),
+          radial-gradient(circle at 70% 80%, rgba(96, 165, 250, 0.12), transparent 45%),
+          #020617;
+      }
+      .overlay {
+        position: relative;
+        z-index: 1;
+        padding: 56px;
+      }
+      .overlay h1 {
+        margin: 0 0 10px;
+      }
+      .overlay p {
+        margin: 0 0 26px;
+        color: #93c5fd;
+      }
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 10px;
+      }
+      button {
+        border: 1px solid #334155;
+        background: #0f172a;
+        color: #e2e8f0;
+        border-radius: 8px;
+        padding: 10px 12px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #172554;
+      }
+      .status {
+        margin-top: 14px;
+        font-size: 13px;
+        color: #cbd5e1;
+      }
+    </style>
+    <script type="module" src="./axi-ambient.mjs"></script>
+  </head>
+  <body>
+    <main>
+      <div class="board">
+        <axi-ambient id="bg" effect="ambient" density="900" speed="0.9" intensity="0.75" interactive="true" explode="true">
+          <section class="overlay">
+            <h1>Axi Ambient Blackboard</h1>
+            <p>Pagina statică de test pentru toate funcționalitățile principale.</p>
+            <div class="controls">
+              <button data-cmd="startCycle">startCycle()</button>
+              <button data-cmd="runConverge">run('converge')</button>
+              <button data-cmd="eventExplode">event: explode</button>
+              <button data-cmd="converge">converge()</button>
+              <button data-cmd="hold">hold()</button>
+              <button data-cmd="explode">explode()</button>
+              <button data-cmd="scatter">scatter()</button>
+              <button data-cmd="pause">pause()</button>
+              <button data-cmd="resume">resume()</button>
+              <button data-cmd="asciiAxi">setAscii AXI</button>
+              <button data-cmd="asciiCore">setAscii CORE</button>
+              <button data-cmd="message">setMessage()</button>
+              <button data-cmd="shapeCircle">setShape(circle)</button>
+              <button data-cmd="shapeSpiral">setShape(spiral)</button>
+              <button data-cmd="shapeWave">setShape(wave)</button>
+              <button data-cmd="shapeGrid">setShape(grid)</button>
+              <button data-cmd="expRadial">explode radial</button>
+              <button data-cmd="expRandom">explode random</button>
+              <button data-cmd="expDirectional">explode directional</button>
+              <button data-cmd="expBurst">explode burst-wave</button>
+              <button data-cmd="holdStatic">hold static</button>
+              <button data-cmd="holdJitter">hold jitter</button>
+              <button data-cmd="holdOrbit">hold orbit</button>
+              <button data-cmd="holdFlow">hold flow-on-shape</button>
+              <button data-cmd="alphaVertical">alpha vertical</button>
+              <button data-cmd="alphaHorizontal">alpha horizontal</button>
+              <button data-cmd="alphaRadial">alpha radial</button>
+              <button data-cmd="alphaLinear">alpha linear</button>
+              <button data-cmd="fullConfig">configure() complet</button>
+            </div>
+            <div class="status" id="status">Ready.</div>
+          </section>
+        </axi-ambient>
+      </div>
+    </main>
+    <script type="module">
+      const bg = document.getElementById("bg");
+      const status = document.getElementById("status");
+
+      const asciiAxi = `
+   #######
+ ## AXI  ##
+#  AMBIENT #
+ ## LAB  ##
+   #######
+`;
+      const asciiCore = `
+ @@@@@@@
+@@     @@
+@ CORE  @
+@ TEST  @
+@@     @@
+ @@@@@@@
+`;
+
+      const alphaPresets = {
+        vertical: {
+          type: "vertical",
+          stops: [
+            { pos: 0, alpha: 0.03 },
+            { pos: 0.35, alpha: 0.15 },
+            { pos: 1, alpha: 0.9 },
+          ],
+        },
+        horizontal: {
+          type: "horizontal",
+          stops: [
+            { pos: 0, alpha: 0.05 },
+            { pos: 0.3, alpha: 0.1 },
+            { pos: 1, alpha: 0.88 },
+          ],
+        },
+        radial: {
+          type: "radial",
+          stops: [
+            { pos: 0, alpha: 0.95 },
+            { pos: 1, alpha: 0.08 },
+          ],
+        },
+        linear: {
+          type: "linear",
+          linear: { x1: 0.1, y1: 0.1, x2: 0.9, y2: 0.9 },
+          stops: [
+            { pos: 0, alpha: 0.05 },
+            { pos: 0.6, alpha: 0.2 },
+            { pos: 1, alpha: 0.95 },
+          ],
+        },
+      };
+
+      function setStatus(text) {
+        status.textContent = text;
+      }
+
+      const handlers = {
+        startCycle: () => { bg.startCycle(); setStatus("startCycle()"); },
+        runConverge: () => { bg.run("converge"); setStatus("run('converge')"); },
+        eventExplode: () => {
+          bg.dispatchEvent(new CustomEvent("axi-command", {
+            detail: { command: "explode" },
+            bubbles: true,
+          }));
+          setStatus("dispatch axi-command explode");
+        },
+        converge: () => { bg.converge(); setStatus("converge()"); },
+        hold: () => { bg.hold(); setStatus("hold()"); },
+        explode: () => { bg.explode(); setStatus("explode()"); },
+        scatter: () => { bg.scatter(); setStatus("scatter()"); },
+        pause: () => { bg.pause(); setStatus("pause()"); },
+        resume: () => { bg.resume(); setStatus("resume()"); },
+        asciiAxi: () => { bg.setAscii(asciiAxi); bg.converge(); setStatus("setAscii(AXI)"); },
+        asciiCore: () => { bg.setAscii(asciiCore); bg.converge(); setStatus("setAscii(CORE)"); },
+        message: () => { bg.setMessage("Executable Research"); bg.converge(); setStatus("setMessage()"); },
+        shapeCircle: () => { bg.setShape("circle"); bg.converge(); setStatus("setShape(circle)"); },
+        shapeSpiral: () => { bg.setShape("spiral"); bg.converge(); setStatus("setShape(spiral)"); },
+        shapeWave: () => { bg.setShape("wave"); bg.converge(); setStatus("setShape(wave)"); },
+        shapeGrid: () => { bg.setShape("grid"); bg.converge(); setStatus("setShape(grid)"); },
+        expRadial: () => { bg.configure({ explosion: { mode: "radial", force: 1.8, spread: 0.25 } }); bg.explode(); setStatus("explosion radial"); },
+        expRandom: () => { bg.configure({ explosion: { mode: "random", force: 2.1, spread: 0.45 } }); bg.explode(); setStatus("explosion random"); },
+        expDirectional: () => { bg.configure({ explosion: { mode: "directional", force: 1.8, spread: 0.35, direction: { x: 1, y: -0.2 } } }); bg.explode(); setStatus("explosion directional"); },
+        expBurst: () => { bg.configure({ explosion: { mode: "burst-wave", force: 2.2, spread: 0.35, stagger: 0.5 } }); bg.explode(); setStatus("explosion burst-wave"); },
+        holdStatic: () => { bg.configure({ hold: { mode: "static", jitterAmplitude: 0, jitterSpeed: 0 } }); bg.hold(); setStatus("hold static"); },
+        holdJitter: () => { bg.configure({ hold: { mode: "jitter", jitterAmplitude: 1.5, jitterSpeed: 0.8 } }); bg.hold(); setStatus("hold jitter"); },
+        holdOrbit: () => { bg.configure({ hold: { mode: "orbit", jitterAmplitude: 1.2, jitterSpeed: 1.1 } }); bg.hold(); setStatus("hold orbit"); },
+        holdFlow: () => { bg.configure({ hold: { mode: "flow-on-shape", jitterAmplitude: 1.1, jitterSpeed: 0.9 } }); bg.hold(); setStatus("hold flow-on-shape"); },
+        alphaVertical: () => { bg.configure({ alphaField: alphaPresets.vertical }); setStatus("alpha vertical"); },
+        alphaHorizontal: () => { bg.configure({ alphaField: alphaPresets.horizontal }); setStatus("alpha horizontal"); },
+        alphaRadial: () => { bg.configure({ alphaField: alphaPresets.radial }); setStatus("alpha radial"); },
+        alphaLinear: () => { bg.configure({ alphaField: alphaPresets.linear }); setStatus("alpha linear"); },
+        fullConfig: () => {
+          bg.configure({
+            mode: "ascii",
+            ascii: asciiAxi,
+            speed: 0.95,
+            intensity: 0.72,
+            interactive: true,
+            cycle: {
+              auto: true,
+              loop: true,
+              chaosDuration: 1400,
+              convergeDuration: 1800,
+              holdDuration: 2200,
+              explodeDuration: 1300,
+              explodeEnabled: true,
+            },
+            hold: {
+              mode: "jitter",
+              jitterAmplitude: 1.4,
+              jitterSpeed: 0.75,
+            },
+            explosion: {
+              mode: "burst-wave",
+              force: 2,
+              spread: 0.4,
+              stagger: 0.35,
+            },
+            particle: {
+              count: 900,
+              sizeMin: 0.7,
+              sizeMax: 2.6,
+              sizeDistribution: "gaussian",
+              colorMode: "random-palette",
+              palette: ["#ffffff", "#dbeafe", "#93c5fd", "#60a5fa"],
+              colorOnShape: ["#ffffff", "#bfdbfe", "#93c5fd"],
+              colorOnExplode: ["#ffffff", "#fca5a5", "#fde68a"],
+              alphaBase: 0.78,
+            },
+            alphaField: alphaPresets.vertical,
+            alphaMasks: [
+              { x: 0.05, y: 0.08, w: 0.48, h: 0.22, alpha: 0.04, feather: 0.16 },
+              { x: 0.58, y: 0.56, w: 0.34, h: 0.28, alpha: 0.08, feather: 0.14 },
+            ],
+          });
+          bg.startCycle();
+          setStatus("configure() complet + startCycle()");
+        },
+      };
+
+      document.querySelectorAll("button[data-cmd]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const cmd = button.dataset.cmd;
+          handlers[cmd]?.();
+        });
+      });
+
+      bg.configure({
+        mode: "ascii",
+        ascii: asciiAxi,
+        alphaMasks: [{ x: 0.04, y: 0.08, w: 0.54, h: 0.25, alpha: 0.03, feather: 0.18 }],
+      });
+      bg.addEventListener("axi-ambient:phase-change", (event) => {
+        setStatus(`phase: ${event.detail.previousPhase} -> ${event.detail.phase}`);
+      });
+      bg.addEventListener("axi-ambient:command-result", (event) => {
+        if (!event.detail.accepted) {
+          setStatus(`command invalid: ${event.detail.command}`);
+        }
+      });
+      bg.startCycle();
+    </script>
+  </body>
+</html>
