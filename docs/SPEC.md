@@ -1,28 +1,41 @@
-# axi-ambient — Specificație implementată (v1)
+# Implementation Specification — `axi-ambient` and `agent-blackboard`
 
-## Obiectiv
+This document describes the implemented contract surface in the repository. It is intentionally strict about what is present in code today and what is still only an integration expectation or future extension.
 
-`<axi-ambient>` este un Web Component standalone, livrat în `axi-ambient.mjs`, fără dependențe externe, pentru fundal animat pe Canvas 2D cu conținut suprapus prin `<slot>`.
+---
 
-## Distribuție și integrare
+## 1. `axi-ambient`
 
-- Single-file: `axi-ambient.mjs`
-- Fără build obligatoriu
-- Fără framework obligatoriu
-- Integrare declarativă (atribute) + programatică (metode)
+### 1.1 Goal
 
-## Model intern
+`<axi-ambient>` is a standalone web component exposed through the root wrapper `axi-ambient.mjs` and implemented in `components/axi-ambient/index.mjs`. It renders a particle-based animated background on a Canvas 2D surface, keeps normal DOM content above the animation through a `<slot>`, and exposes both declarative and programmatic control.
 
-- `ParticleEngine` — simulare particule
-- `TargetSampler` — ASCII / text / shape / points
-- `AlphaField` — gradient global + măști locale cu feather
-- `StateController` — mașină de stări
-- `Renderer2D` — randare Canvas 2D
-- `AxiAmbientElement` — lifecycle, observers, API public
+### 1.2 Delivery and runtime model
 
-## Mașină de stări
+- root wrapper: `axi-ambient.mjs`
+- source file: `components/axi-ambient/index.mjs`
+- no external runtime dependency
+- no required build step
+- Shadow DOM encapsulation
+- Canvas 2D renderer
+- overlay content through slotted DOM
 
-Stări active:
+### 1.3 Internal modules
+
+The file is internally organized around the following classes:
+
+- `AlphaField`
+- `TargetSampler`
+- `StateController`
+- `ParticleEngine`
+- `Renderer2D`
+- `AxiAmbientElement`
+
+This structure is part of the implementation design, but only `AxiAmbientElement` is public API.
+
+### 1.4 Phase model
+
+Implemented phases:
 
 - `chaos`
 - `converge`
@@ -30,77 +43,69 @@ Stări active:
 - `explode`
 - `return`
 
-Flux implicit cu ciclu activ:
+Default automatic flow:
 
-`chaos -> converge -> hold -> explode -> return -> chaos`
+```text
+chaos -> converge -> hold -> explode -> return -> chaos
+```
 
-Manual control:
+Manual methods such as `converge()`, `hold()`, `explode()`, and `scatter()` force a phase and disable auto-cycle until `startCycle()` is called again.
 
-- `converge()`, `hold()`, `explode()`, `scatter()` forțează faza și opresc auto-cycle
-- `startCycle()` reactivează auto-cycle
+### 1.5 Target modes
 
-## Tipuri de țintă
+Implemented target-generation modes:
 
 - `ascii`
 - `text`
-- `shape` (`circle`, `spiral`, `wave`, `grid`)
+- `shape`
 - `points`
 
-## Alpha field și măști
+Implemented mathematical `shape` variants:
 
-Tipuri `alphaField.type`:
+- `circle`
+- `spiral`
+- `wave`
+- `grid`
+
+Not implemented yet:
+
+- `svg-raster`
+
+### 1.6 Particle configuration
+
+The component supports the following implemented particle controls through `configure()`:
+
+- particle count
+- fixed size or distributed size (`random`, `uniform`, `gaussian`, `weighted`)
+- fixed color or palette-based color modes (`fixed`, `random-palette`, `gradient`, `by-state`)
+- per-state palette switching for normal/shape/explode phases
+- base alpha
+- size multiplier during hold and explode
+
+### 1.7 Alpha field and local masks
+
+Implemented global alpha field types:
 
 - `vertical`
 - `horizontal`
 - `radial`
 - `linear`
 
-Compoziție alpha efectiv:
+Implemented local mask behavior:
 
-`effectiveAlpha = particle.alpha * stateAlpha * globalAlpha(x,y) * maskAlpha(x,y)`
+- normalized box masks
+- per-mask target alpha
+- feathered edge falloff
 
-## API public
+Effective draw alpha is computed from:
 
-- `configure(options)`
-- `setAscii(ascii)`
-- `setMessage(text)`
-- `setShape(name)`
-- `setPoints(points)`
-- `run(command, payload)` (adapter indirect)
-- `getState()`
-- `startCycle()`
-- `converge()`
-- `hold()`
-- `explode()`
-- `scatter()`
-- `pause()`
-- `resume()`
-- `destroy()`
+```text
+particle alpha * state alpha * global alpha field * local mask contribution
+```
 
-## API indirect pentru tehnologii target
+### 1.8 Declarative attributes
 
-Contractul de control indirect este stabil și versionabil (v1):
-
-- namespace comenzi: `axi-command`
-- namespace telemetrie: `axi-ambient:*`
-- payload comenzi: `{ command: string, payload?: unknown }`
-- rezultat comandă: `{ command, accepted }`
-
-### Comenzi via event
-
-Pe element:
-
-- event input: `axi-command` (`detail: { command, payload }`)
-- event output: `axi-ambient:command-result`
-
-### Evenimente de runtime
-
-- `axi-ambient:ready`
-- `axi-ambient:phase-change`
-- `axi-ambient:config-change`
-- `axi-ambient:destroyed`
-
-## Atribute declarative
+Observed attributes:
 
 - `effect`
 - `ascii`
@@ -113,171 +118,410 @@ Pe element:
 - `explode`
 - `theme`
 - `paused`
-- `config` (JSON)
+- `config`
 
-## Compatibilitate și consum indirect
+`effect="ambient"` currently maps to `shape` mode with a default `wave` target.
 
-Componenta poate fi controlată:
+### 1.9 Public API
 
-1. direct, prin referință DOM + metode
-2. indirect, prin event bus (recomandat pentru adaptoare framework)
-3. declarativ, prin atribute + `config` JSON
+Implemented methods:
 
-## Performanță
+- `configure(options)`
+- `setAscii(ascii)`
+- `setMessage(text)`
+- `setShape(name)`
+- `setPoints(points)`
+- `run(command, payload)`
+- `getState()`
+- `startCycle()`
+- `converge()`
+- `hold()`
+- `explode()`
+- `scatter()`
+- `pause()`
+- `resume()`
+- `destroy()`
 
-- `requestAnimationFrame`
-- `ResizeObserver`
-- `IntersectionObserver`
-- limitare `devicePixelRatio <= 2`
-- cache target sampling
+### 1.10 Events
 
-## Accesibilitate
+Implemented events:
 
-- respectă `prefers-reduced-motion` când `motion: "auto"`
-- modurile `reduce/static/off` se configurează prin `configure({ motion })`
+- `axi-ambient:ready`
+- `axi-ambient:phase-change`
+- `axi-ambient:config-change`
+- `axi-ambient:command-result`
+- `axi-ambient:destroyed`
+
+### 1.11 Motion and visibility handling
+
+Implemented runtime behavior:
+
+- `ResizeObserver` resizes the canvas to the host box
+- `IntersectionObserver` pauses the RAF loop when the element is not visible
+- `prefers-reduced-motion` is observed and folded into `motion: "auto"`
+- `devicePixelRatio` is capped at `2`
+
+Supported motion modes through configuration:
+
+- `auto`
+- `reduce`
+- `static`
+- `off`
+
+### 1.12 Known limits
+
+- no SVG-raster target sampling yet
+- no arbitrary path-mask alpha field yet
+- no neighbor-grid optimization layer yet
+- no semantic fallback content is injected automatically for text/ASCII targets
 
 ---
 
-# agent-blackboard — Specificație implementată (v1)
+## 2. `agent-blackboard`
 
-## Obiectiv
+### 2.1 Goal
 
-`<agent-blackboard>` este un Web Component standalone, livrat în `agent-blackboard.mjs`, fără dependențe externe, care oferă o suprafață vizuală partajată controlată de agenți AI prin mesaje tehnice în chatul WebMeet.
+`<agent-blackboard>` is a standalone web component exposed through the root wrapper `agent-blackboard.mjs` and implemented in `components/agent-blackboard/index.mjs`. It renders a layered DOM scene controlled through commands or through a text protocol line that can be routed by a host application such as WebMeet.
 
-## Distribuție și integrare
+### 2.2 Delivery and runtime model
 
-- Single-file: `agent-blackboard.mjs`
-- Fără build obligatoriu
-- Fără framework obligatoriu
-- Integrare programatică + protocol text
+- root wrapper: `agent-blackboard.mjs`
+- source file: `components/agent-blackboard/index.mjs`
+- no external runtime dependency
+- no required build step
+- Shadow DOM encapsulation
+- DOM scene with layered absolute-positioned objects
 
-## Contract de control
+### 2.3 Scene model
 
-Formatul protocolului:
+Implemented layers:
 
-```
+- `background`
+- `media`
+- `vector`
+- `text`
+- `ui`
+- `overlay`
+
+Each rendered object is stored by stable `id` inside the internal `SceneManager.objects` map.
+
+### 2.4 Protocol line
+
+Implemented protocol format:
+
+```text
 blackboard:<agentId>:<userId>:<base64url(JSON)>
 ```
 
-| Câmp | Descriere |
-|------|-----------|
-| agentId | Identificatorul agentului |
-| userId | Participantul țintă (gol = blackboard comun) |
-| base64url(JSON) | Payload cu comenzi vizuale |
+Meaning inside the component:
 
-Exemple:
-- `blackboard:socrates::PAYLOAD` — blackboard comun
-- `blackboard:socrates:user-ana:PAYLOAD` — blackboard individual
+- `agentId` becomes `host.agentId`
+- `userId` becomes `host.boardUserId`
+- the payload is base64url-decoded, parsed as JSON, and executed
+- `correlationId` is stored when present
 
-## Model intern
+The component can parse and apply the protocol line. It does **not** validate whether the sender is authorized to use that `agentId` or whether `userId` is valid in a meeting roster.
 
-- `SceneManager` — gestionare scenă, obiecte, straturi
-- `ThemeManager` — teme vizuale prin CSS variables
-- `TransitionEngine` — animații și tranziții
-- `AgentBlackboardElement` — lifecycle, API public, protocol parsing
+### 2.5 Payload model
 
-## Straturi vizuale
+The implemented payload path supports:
 
-| Strat | Conținut |
-|-------|----------|
-| background | Fundaluri, culori, imagini ambientale |
-| media | YouTube, imagini, capturi, embeds |
-| vector | SVG-uri, linii, săgeți, forme |
-| text | Titluri, subtitrări, explicații |
-| ui | Timer-e, tabele, liste, inputuri |
-| overlay | Highlight-uri, efecte, elemente temporare |
+- a single command object, or
+- a batch payload with `commands`
 
-## Tipuri de obiecte
+Batch payload fields that are meaningfully consumed:
 
-`text`, `box`, `image`, `svg`, `line`, `arrow`, `rect`, `circle`, `path`, `table`, `list`, `timer`, `progress`, `iframe`, `input`
+- `mode`
+- `commands`
+- `correlationId`
 
-## Operații suportate
+`mode: "atomic"` is implemented, but the rollback mechanism is shallow: it snapshots current objects and theme, then attempts to restore them on failure. It should not be treated as a durable scene transaction engine.
 
-### Scenă
-`scene.clear`, `scene.clearLayer`, `scene.theme`, `scene.background`, `scene.layout`, `scene.exportImage`, `scene.restore`
+### 2.6 Command structure
 
-### Obiecte
-`object.create`, `object.update`, `object.move`, `object.resize`, `object.transform`, `object.hide`, `object.show`, `object.delete`
+Command fields consumed by the implementation include:
 
-### Text
-`text.show`, `text.update`, `text.append`, `text.highlight`, `text.clear`
+- `op`
+- `id`
+- `type`
+- `layer`
+- `content`
+- `geometry`
+- `style`
+- `timing`
+- `transition`
+- `ttl`
 
-### Forme
-`shape.line`, `shape.arrow`, `shape.rect`, `shape.circle`, `shape.path`, `shape.update`
+Not every field matters for every operation, but these are the supported low-level knobs on the command surface.
 
-### SVG
-`svg.show`, `svg.replace`, `svg.highlight`, `svg.zoom`, `svg.pan`
+### 2.7 Supported operations
 
-### Media
-`image.show`, `image.replace`, `image.highlight`, `screenshot.show`, `youtube.load`, `youtube.play`, `youtube.segment`, `youtube.pause`, `youtube.seek`, `media.caption`, `media.remove`
+#### Scene
 
-### Liste și tabele
-`list.show`, `list.add`, `list.update`, `list.reveal`, `list.remove`, `table.show`, `table.updateRow`, `table.updateCell`, `table.sort`
+- `scene.clear`
+- `scene.clearLayer`
+- `scene.theme`
+- `scene.background`
+- `scene.layout`
+- `scene.exportImage`
+- `scene.restore`
 
-### Timer și progres
-`timer.show`, `timer.start`, `timer.pause`, `timer.resume`, `timer.stop`, `timer.reset`, `progress.show`, `progress.update`
+#### Object lifecycle
 
-### Input
-`input.text`, `input.privateText`, `input.choice`, `input.multiChoice`, `input.vote`, `input.reaction`, `input.close`, `input.status`, `input.clear`
+- `object.create`
+- `object.update`
+- `object.move`
+- `object.resize`
+- `object.transform`
+- `object.hide`
+- `object.show`
+- `object.delete`
 
-## Tranziții
+#### Text
 
-`fadeIn`, `fadeOut`, `slideIn`, `slideOut`, `scaleIn`, `scaleOut`, `smoothMove`, `typewriter`, `draw`, `pulse`, `flash`, `shake`
+- `text.show`
+- `text.update`
+- `text.append`
+- `text.highlight`
+- `text.clear`
 
-## Teme vizuale
+#### Shapes
 
-`formal`, `playful`, `quiz`, `court`, `mystery`, `classroom`, `minimal`
+- `shape.line`
+- `shape.arrow`
+- `shape.rect`
+- `shape.circle`
+- `shape.path`
+- `shape.update`
 
-## API public
+#### SVG
 
-- `clear()`, `clearLayer(layer)`
-- `setTheme(name)`, `setBackground(params)`, `setLayout(name)`
-- `applyCommand(cmd)`, `applyCommands(payload)`
+- `svg.show`
+- `svg.replace`
+- `svg.highlight`
+- `svg.zoom`
+- `svg.pan`
+
+#### Media
+
+- `image.show`
+- `image.replace`
+- `image.highlight`
+- `screenshot.show`
+- `youtube.load`
+- `youtube.play`
+- `youtube.segment`
+- `youtube.pause`
+- `youtube.seek`
+- `media.caption`
+- `media.remove`
+
+#### Lists and tables
+
+- `list.show`
+- `list.add`
+- `list.update`
+- `list.reveal`
+- `list.remove`
+- `table.show`
+- `table.updateRow`
+- `table.updateCell`
+- `table.sort`
+
+#### Timer and progress
+
+- `timer.show`
+- `timer.start`
+- `timer.pause`
+- `timer.resume`
+- `timer.stop`
+- `timer.reset`
+- `progress.show`
+- `progress.update`
+
+#### Input
+
+- `input.text`
+- `input.privateText`
+- `input.choice`
+- `input.multiChoice`
+- `input.vote`
+- `input.reaction`
+- `input.close`
+- `input.status`
+- `input.clear`
+
+### 2.8 Object types
+
+Implemented object types:
+
+- `text`
+- `box`
+- `image`
+- `svg`
+- `line`
+- `arrow`
+- `rect`
+- `circle`
+- `path`
+- `table`
+- `list`
+- `timer`
+- `progress`
+- `iframe`
+- `input`
+
+Generic object content is rendered as plain text for supported generic containers such as `box`. The component does not expose arbitrary HTML injection for generic content objects.
+
+### 2.9 Geometry and layout
+
+Implemented geometry fields:
+
+- `x`
+- `y`
+- `width`
+- `height`
+- `right`
+- `bottom`
+- `align`
+- `anchor`
+- `rotation`
+- `zIndex`
+
+Important current limitation:
+
+- `scene.layout` changes the scene container display mode (`block`, `grid`, or `flex` variants), but rendered objects remain absolutely positioned inside layer containers. This means `scene.layout` is **not** currently a true automatic layout engine.
+
+### 2.10 Transitions
+
+Implemented transition types:
+
+- `fadeIn`
+- `fadeOut`
+- `slideIn`
+- `slideOut`
+- `scaleIn`
+- `scaleOut`
+- `smoothMove`
+- `typewriter`
+- `draw`
+- `pulse`
+- `flash`
+- `shake`
+
+These are lightweight client-side effects, not a full animation timeline system.
+
+### 2.11 Themes
+
+Implemented themes:
+
+- `formal`
+- `playful`
+- `quiz`
+- `court`
+- `mystery`
+- `classroom`
+- `minimal`
+
+Themes are implemented through CSS custom properties applied to the component host.
+
+### 2.12 Media and SVG behavior
+
+Current behavior:
+
+- SVG content is sanitized client-side before insertion
+- scripts, `foreignObject`, embedded objects, `iframe`, `link`, `meta`, and event-handler attributes are stripped
+- YouTube embeds are inserted as iframes and now include `enablejsapi=1` so pause/seek/play messaging can work against the embedded player
+
+The component does not implement a remote screenshot service, asset registry, or content trust policy by itself.
+
+### 2.13 Input and user actions
+
+Implemented input families:
+
+- text
+- private text
+- single choice
+- multi choice
+- vote
+- reaction
+
+Implemented emitted event:
+
+```js
+blackboard:action
+```
+
+with detail fields:
+
+- `source`
+- `agentId`
+- `boardUserId`
+- `sourceUserId`
+- `sourceDisplayName`
+- `inputId`
+- `action`
+- `value`
+- `correlationId`
+- `timestamp`
+
+`input.vote` now supports local result rendering in the component, but multi-user vote aggregation still depends on the host application routing real user identities and results.
+
+### 2.14 Public API
+
+Implemented methods:
+
+- `clear()`
+- `clearLayer(layer)`
+- `setTheme(name)`
+- `setBackground(params)`
+- `setLayout(name)`
+- `applyCommand(cmd)`
+- `applyCommands(payload)`
 - `processProtocolLine(line)`
-- `getState()`, `destroy()`
-- `setupAmbient(options)`, `removeAmbient()`, `showAmbient()`, `hideAmbient()`
+- `getState()`
+- `destroy()`
+- `setupAmbient(options)`
+- `removeAmbient()`
+- `showAmbient()`
+- `hideAmbient()`
 
-## Evenimente
+### 2.15 Events
+
+Implemented events:
 
 - `blackboard:ready`
-- `blackboard:action` — acțiuni utilizator (input, choice, vote, reaction)
-- `blackboard:export` — cerere export imagine
+- `blackboard:action`
+- `blackboard:export`
 - `blackboard:destroyed`
 
-## MiniSDK
+`scene.exportImage` maps to `blackboard:export`; it does not generate an image asset itself.
 
-Funcția `createBlackboardSDK(agentId, options)` produce un obiect SDK cu API fluent:
+### 2.16 MiniSDK
 
-```js
-const sdk = createBlackboardSDK("socrates");
-sdk.clear()
-  .theme("quiz")
-  .text("title", "Quiz Time!", { geometry: { x: 40, y: 20 }, style: { fontSize: "32px" } })
-  .timer("timer", 60, { geometry: { x: 40, y: 80 } })
-  .askChoice("answer", "Choose:", { options: ["A", "B", "C"] })
-  .applyTo(blackboardEl);
-```
+`createBlackboardSDK(agentId, options)` builds protocol payloads or applies them directly to a blackboard instance.
 
-SAU emite linie protocol:
+Implemented SDK methods:
 
-```js
-const line = sdk.emit(); // "blackboard:socrates::base64url..."
-```
+- addressing: `toAll()`, `toUser(userId)`
+- low-level: `command()`, `batch()`, `build()`, `emit()`, `applyTo()`
+- scene: `clear()`, `theme()`, `background()`, `exportImage()`
+- content: `text()`, `typeText()`, `box()`, `image()`, `svg()`, `screenshot()`, `youtubeSegment()`, `table()`, `list()`, `timer()`, `progress()`
+- input: `askText()`, `askPrivateText()`, `askChoice()`, `askMultiChoice()`, `askVote()`, `askReaction()`, `closeInput()`
 
-## Integrare cu axi-ambient
+`table()` now accepts either:
 
-`<agent-blackboard>` poate include `<axi-ambient>` ca fundal animat:
+- an array of rows plus `options.headers`, or
+- a structured object `{ headers, rows }`
 
-```js
-bb.setupAmbient({ effect: "ambient", density: 500, speed: 0.7 });
-bb.hideAmbient();
-bb.showAmbient();
-bb.removeAmbient();
-```
+### 2.17 Convenience ambient bridge
 
-## Securitate
+`setupAmbient()` embeds an `axi-ambient` element behind the board scene. This is a repository convenience for combined demos and lightweight integrations. It should not be mistaken for a general-purpose plugin or composition framework.
 
-- SVG sanitizare strictă (script-uri, event handlers, foreignObject eliminate)
-- HTML arbitrar nu se execută
-- Validare operații cunoscute
-- Payload JSON validat
+### 2.18 Known limits
+
+- no built-in WebMeet interceptor
+- no agent/user authorization
+- no full scene persistence or restoration
+- no built-in export rasterizer
+- no true automatic layout engine despite the `scene.layout` command name

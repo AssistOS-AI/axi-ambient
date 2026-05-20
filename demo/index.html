@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>axi-ambient + agent-blackboard demo</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="../axi-ambient.mjs"></script>
+    <script type="module" src="../agent-blackboard.mjs"></script>
+    <script type="module" src="./app.mjs"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div>
+          <h1>axi-ambient + agent-blackboard</h1>
+          <p>Empty by default. Right-click the blackboard to add content where you want it, or switch to the ambient playground for target-driven particle scenes.</p>
+        </div>
+        <div class="top-tabs" role="tablist" aria-label="Demo mode">
+          <button class="top-tab is-active" type="button" data-tab="blackboard">Blackboard</button>
+          <button class="top-tab" type="button" data-tab="ambient">Ambient</button>
+        </div>
+      </header>
+
+      <main class="app-main">
+        <section class="stage-column">
+          <div class="stage-host">
+            <div class="stage-frame">
+              <section class="stage-panel is-active" id="panel-blackboard">
+                <agent-blackboard id="bb" theme="minimal" show-ambient="hidden"></agent-blackboard>
+              </section>
+              <section class="stage-panel" id="panel-ambient">
+                <div class="ambient-placeholder" id="ambientPlaceholder">
+                  Ambient starts empty. Use the controls on the right to create and run a scene.
+                </div>
+                <div class="ambient-root" id="ambientRoot"></div>
+              </section>
+            </div>
+          </div>
+          <div class="stage-footer">
+            <span id="statusText">Ready.</span>
+            <span id="stateText">Objects: 0</span>
+          </div>
+        </section>
+
+        <aside class="sidebar">
+          <div class="sidebar-panel is-active" id="sidebar-blackboard">
+            <section class="accordion">
+              <button class="accordion-toggle" type="button" aria-expanded="false">
+                <span>Settings</span>
+                <span class="accordion-icon" aria-hidden="true">▾</span>
+              </button>
+              <div class="accordion-body">
+                <label class="field">
+                  <span>Theme</span>
+                  <select id="themeSelect">
+                    <option value="minimal">minimal</option>
+                    <option value="formal">formal</option>
+                    <option value="playful">playful</option>
+                    <option value="quiz">quiz</option>
+                    <option value="court">court</option>
+                    <option value="mystery">mystery</option>
+                    <option value="classroom">classroom</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Background</span>
+                  <select id="backgroundSelect">
+                    <option value="paper">paper</option>
+                    <option value="soft-gray">soft gray</option>
+                    <option value="warm-gray">warm gray</option>
+                    <option value="gradient">gradient</option>
+                    <option value="live-ambient">live ambient</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Placement</span>
+                  <select id="placementSelect">
+                    <option value="structured">structured</option>
+                    <option value="staggered">staggered</option>
+                    <option value="random-safe" selected>random safe</option>
+                  </select>
+                </label>
+
+                <div class="meta-card">Right-click any empty place on the blackboard to open the add-content menu exactly at that location.</div>
+                <div class="button-row">
+                  <button type="button" data-action="scene-export">Export event</button>
+                  <button type="button" data-action="clear-board" class="danger">Clear all</button>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="sidebar-panel" id="sidebar-ambient">
+            <section class="accordion">
+              <button class="accordion-toggle" type="button" aria-expanded="false">
+                <span>Settings</span>
+                <span class="accordion-icon" aria-hidden="true">▾</span>
+              </button>
+              <div class="accordion-body">
+                <label class="field">
+                  <span>Target</span>
+                  <select id="ambientTargetSelect">
+                    <option value="ascii-axi">ASCII AXI</option>
+                    <option value="ascii-research">ASCII RESEARCH</option>
+                    <option value="library-ascii">Imported ASCII library</option>
+                    <option value="uploaded-ascii">Uploaded ASCII</option>
+                    <option value="message">Message</option>
+                    <option value="circle">Circle</option>
+                    <option value="spiral">Spiral</option>
+                    <option value="wave">Wave</option>
+                    <option value="grid">Grid</option>
+                    <option value="heart">Heart</option>
+                    <option value="star">Star</option>
+                    <option value="infinity">Infinity</option>
+                    <option value="speech">Speech bubble</option>
+                    <option value="rocket">Rocket</option>
+                    <option value="trophy">Trophy</option>
+                    <option value="smile">Smile</option>
+                    <option value="arrow-up">Arrow up</option>
+                    <option value="network">Network</option>
+                    <option value="community">Community</option>
+                  </select>
+                </label>
+
+                <label class="field hidden" id="ambientAsciiUploadField">
+                  <span>ASCII upload</span>
+                  <input id="ambientAsciiFile" type="file" accept=".txt,.asc,.ascii,text/plain" />
+                </label>
+
+                <div class="hidden" id="ambientLibraryFields">
+                  <label class="field">
+                    <span>Library category</span>
+                    <select id="ambientLibraryCategorySelect"></select>
+                  </label>
+
+                  <label class="field">
+                    <span>Library subcategory</span>
+                    <select id="ambientLibrarySubcategorySelect"></select>
+                  </label>
+
+                  <label class="field">
+                    <span>ASCII art</span>
+                    <select id="ambientLibraryArtSelect"></select>
+                  </label>
+
+                  <label class="field">
+                    <span>Preview</span>
+                    <textarea id="ambientLibraryPreview" readonly></textarea>
+                  </label>
+                </div>
+
+                <label class="field">
+                  <span>Hold mode</span>
+                  <select id="ambientHoldSelect">
+                    <option value="jitter">jitter</option>
+                    <option value="static">static</option>
+                    <option value="orbit">orbit</option>
+                    <option value="flow-on-shape">flow-on-shape</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Explosion</span>
+                  <select id="ambientExplosionSelect">
+                    <option value="burst-wave">burst-wave</option>
+                    <option value="radial">radial</option>
+                    <option value="random">random</option>
+                    <option value="directional">directional</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Alpha</span>
+                  <select id="ambientAlphaSelect">
+                    <option value="vertical">vertical</option>
+                    <option value="horizontal">horizontal</option>
+                    <option value="radial">radial</option>
+                    <option value="linear">linear</option>
+                    <option value="hero-mask">hero-mask</option>
+                    <option value="dashboard-mask">dashboard-mask</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Density <strong id="ambientDensityValue">2200</strong></span>
+                  <input id="ambientDensityRange" type="range" min="200" max="8000" step="100" value="2200" />
+                </label>
+              </div>
+            </section>
+
+            <section class="accordion">
+              <button class="accordion-toggle" type="button" aria-expanded="false">
+                <span>Behavior</span>
+                <span class="accordion-icon" aria-hidden="true">▾</span>
+              </button>
+              <div class="accordion-body">
+                <label class="field">
+                  <span>Speed <strong id="ambientSpeedValue">2.8x</strong></span>
+                  <input id="ambientSpeedRange" type="range" min="0.5" max="4.5" step="0.1" value="2.8" />
+                </label>
+
+                <label class="field">
+                  <span>Converge pull <strong id="ambientPullValue">7.5</strong></span>
+                  <input id="ambientPullRange" type="range" min="2" max="12" step="0.1" value="7.5" />
+                </label>
+
+                <label class="field">
+                  <span>Roam radius <strong id="ambientSpreadValue">14</strong></span>
+                  <input id="ambientSpreadRange" type="range" min="0" max="36" step="1" value="14" />
+                </label>
+
+                <label class="field">
+                  <span>Roam amplitude <strong id="ambientDriftValue">8</strong></span>
+                  <input id="ambientDriftRange" type="range" min="0" max="24" step="0.5" value="8" />
+                </label>
+
+                <label class="field">
+                  <span>Roam speed <strong id="ambientDriftSpeedValue">1.4</strong></span>
+                  <input id="ambientDriftSpeedRange" type="range" min="0" max="3.5" step="0.1" value="1.4" />
+                </label>
+
+                <label class="field">
+                  <span>Intensity <strong id="ambientIntensityValue">0.82</strong></span>
+                  <input id="ambientIntensityRange" type="range" min="0.2" max="1.2" step="0.02" value="0.82" />
+                </label>
+              </div>
+            </section>
+
+            <section class="accordion">
+              <button class="accordion-toggle" type="button" aria-expanded="false">
+                <span>Particles</span>
+                <span class="accordion-icon" aria-hidden="true">▾</span>
+              </button>
+              <div class="accordion-body">
+                <label class="field">
+                  <span>Particle shape</span>
+                  <select id="ambientParticleShapeSelect">
+                    <option value="circle">circle</option>
+                    <option value="square">square</option>
+                    <option value="diamond">diamond</option>
+                    <option value="star">star</option>
+                    <option value="plus">plus</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Color mode</span>
+                  <select id="ambientColorModeSelect">
+                    <option value="random-palette">random palette</option>
+                    <option value="gradient">gradient</option>
+                    <option value="by-state">by state</option>
+                    <option value="fixed">fixed</option>
+                  </select>
+                </label>
+
+                <div class="field-grid">
+                  <label class="field">
+                    <span>Base color</span>
+                    <input id="ambientBaseColor" type="color" value="#93c5fd" />
+                  </label>
+                  <label class="field">
+                    <span>Shape color</span>
+                    <input id="ambientShapeColor" type="color" value="#ffffff" />
+                  </label>
+                </div>
+
+                <div class="field-grid">
+                  <label class="field">
+                    <span>Explode color</span>
+                    <input id="ambientExplodeColor" type="color" value="#fb923c" />
+                  </label>
+                  <label class="field">
+                    <span>Palette preset</span>
+                    <select id="ambientPaletteSelect">
+                      <option value="custom">custom</option>
+                      <option value="warm">warm</option>
+                      <option value="ice">ice</option>
+                      <option value="sunrise">sunrise</option>
+                      <option value="motivation">motivation</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label class="field">
+                  <span>Size min <strong id="ambientSizeMinValue">0.8</strong></span>
+                  <input id="ambientSizeMinRange" type="range" min="0.4" max="6" step="0.1" value="0.8" />
+                </label>
+
+                <label class="field">
+                  <span>Size max <strong id="ambientSizeMaxValue">3.6</strong></span>
+                  <input id="ambientSizeMaxRange" type="range" min="1" max="12" step="0.1" value="3.6" />
+                </label>
+
+                <label class="field">
+                  <span>Hold size boost <strong id="ambientSizeHoldValue">1.35</strong></span>
+                  <input id="ambientSizeHoldRange" type="range" min="0.8" max="2.5" step="0.05" value="1.35" />
+                </label>
+              </div>
+            </section>
+
+            <section class="accordion">
+              <button class="accordion-toggle" type="button" aria-expanded="false">
+                <span>Timing</span>
+                <span class="accordion-icon" aria-hidden="true">▾</span>
+              </button>
+              <div class="accordion-body">
+                <label class="field">
+                  <span>Chaos ms <strong id="ambientChaosValue">500</strong></span>
+                  <input id="ambientChaosRange" type="range" min="0" max="2000" step="50" value="500" />
+                </label>
+
+                <label class="field">
+                  <span>Converge ms <strong id="ambientConvergeValue">850</strong></span>
+                  <input id="ambientConvergeRange" type="range" min="200" max="3000" step="50" value="850" />
+                </label>
+
+                <label class="field">
+                  <span>Hold ms <strong id="ambientHoldDurationValue">1200</strong></span>
+                  <input id="ambientHoldDurationRange" type="range" min="200" max="4000" step="50" value="1200" />
+                </label>
+
+                <label class="field">
+                  <span>Explode ms <strong id="ambientExplodeDurationValue">500</strong></span>
+                  <input id="ambientExplodeDurationRange" type="range" min="150" max="2000" step="50" value="500" />
+                </label>
+              </div>
+            </section>
+
+            <section class="accordion">
+              <button class="accordion-toggle" type="button" aria-expanded="false">
+                <span>State</span>
+                <span class="accordion-icon" aria-hidden="true">▾</span>
+              </button>
+              <div class="accordion-body">
+                <div class="meta-card" id="ambientMeta">No ambient scene created yet.</div>
+                <div class="meta-card">Any change rebuilds the scene and forces a new converge pass toward the current target.</div>
+                <div class="button-row">
+                  <button type="button" data-action="ambient-preview">Preview</button>
+                  <button type="button" data-action="ambient-remove" class="danger">Remove</button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <div class="modal" id="customModal" aria-hidden="true">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="customModalTitle">
+        <div class="modal-header">
+          <h2 id="customModalTitle">Add custom element</h2>
+          <button type="button" id="closeModalBtn" class="ghost">Close</button>
+        </div>
+        <form id="customForm">
+          <div class="modal-body">
+            <label class="field">
+              <span>Kind</span>
+              <select id="modalKind">
+                <option value="text">Text note</option>
+                <option value="box">Box</option>
+                <option value="image">Image</option>
+                <option value="youtube">YouTube</option>
+                <option value="choice">Choice input</option>
+                <option value="private-text">Private text</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Title</span>
+              <input id="modalLabel" type="text" value="Custom element" />
+            </label>
+
+            <label class="field">
+              <span>Content</span>
+              <textarea id="modalBody">Created from the popup.</textarea>
+            </label>
+
+            <label class="field" id="modalUrlField">
+              <span>URL</span>
+              <input id="modalUrl" type="text" value="https://picsum.photos/seed/custom-demo/640/360" />
+            </label>
+
+            <label class="field hidden" id="modalOptionsField">
+              <span>Options (one per line)</span>
+              <textarea id="modalOptions">Option A
+Option B
+Option C</textarea>
+            </label>
+          </div>
+          <div class="modal-footer">
+            <button type="button" id="cancelModalBtn" class="ghost">Cancel</button>
+            <button type="submit">Create</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="context-menu hidden" id="boardContextMenu">
+      <div class="context-menu-title">Add at cursor</div>
+      <div class="context-menu-grid">
+        <button type="button" data-create="add-title">Title</button>
+        <button type="button" data-create="add-note">Note</button>
+        <button type="button" data-create="add-box">Box</button>
+        <button type="button" data-create="add-card">Card</button>
+        <button type="button" data-create="add-list">List</button>
+        <button type="button" data-create="add-table">Table</button>
+        <button type="button" data-create="add-timer">Timer</button>
+        <button type="button" data-create="add-progress">Progress</button>
+        <button type="button" data-create="add-choice">Choice</button>
+        <button type="button" data-create="add-vote">Vote</button>
+        <button type="button" data-create="add-reaction">Reaction</button>
+        <button type="button" data-create="open-custom">Custom…</button>
+        <button type="button" data-create="add-image">Image</button>
+        <button type="button" data-create="add-youtube">YouTube</button>
+        <button type="button" data-create="add-svg">SVG</button>
+        <button type="button" data-create="shape-line">Line</button>
+        <button type="button" data-create="shape-arrow">Arrow</button>
+        <button type="button" data-create="shape-rect">Rect</button>
+        <button type="button" data-create="shape-circle">Circle</button>
+        <button type="button" data-create="shape-path">Path</button>
+      </div>
+      <div class="context-menu-divider"></div>
+      <div class="context-menu-title">Demo flows</div>
+      <div class="context-menu-grid context-menu-grid-small">
+        <button type="button" data-create="protocol-common">Protocol common</button>
+        <button type="button" data-create="protocol-private">Protocol private</button>
+        <button type="button" data-create="sdk-quiz">SDK quiz</button>
+        <button type="button" data-create="sdk-game">SDK game</button>
+        <button type="button" data-create="sdk-pitch">SDK pitch</button>
+        <button type="button" data-create="sdk-recap">SDK recap</button>
+        <button type="button" data-create="clear-ui">Clear UI</button>
+      </div>
+    </div>
+  </body>
+</html>
