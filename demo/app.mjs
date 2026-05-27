@@ -21,8 +21,9 @@ const elements = {
   ambientLibrarySubcategorySelect: document.getElementById("ambientLibrarySubcategorySelect"),
   ambientLibraryArtSelect: document.getElementById("ambientLibraryArtSelect"),
   ambientLibraryPreview: document.getElementById("ambientLibraryPreview"),
+  ambientCycleModeSelect: document.getElementById("ambientCycleModeSelect"),
+  ambientDecomposeSelect: document.getElementById("ambientDecomposeSelect"),
   ambientHoldSelect: document.getElementById("ambientHoldSelect"),
-  ambientExplosionSelect: document.getElementById("ambientExplosionSelect"),
   ambientAlphaSelect: document.getElementById("ambientAlphaSelect"),
   ambientDensityRange: document.getElementById("ambientDensityRange"),
   ambientDensityValue: document.getElementById("ambientDensityValue"),
@@ -132,8 +133,9 @@ const ambient = new AmbientPlayground({
     target: elements.ambientTargetSelect.value,
     uploadedAscii: ambientUploadedAscii,
     libraryAscii: elements.ambientLibraryArtSelect.selectedOptions[0]?.dataset.ascii || "",
+    cycleMode: elements.ambientCycleModeSelect.value,
+    decompose: elements.ambientDecomposeSelect.value,
     hold: elements.ambientHoldSelect.value,
-    explosion: elements.ambientExplosionSelect.value,
     alpha: elements.ambientAlphaSelect.value,
     density: Number.parseInt(elements.ambientDensityRange.value, 10),
     speed: Number.parseFloat(elements.ambientSpeedRange.value),
@@ -270,7 +272,7 @@ elements.placementSelect.addEventListener("change", () => {
 elements.ambientTargetSelect.addEventListener("change", async () => {
   if (elements.ambientTargetSelect.value === "library-ascii") await initAsciiLibraryControls();
   updateAmbientTargetFields();
-  ambient.resetAndApply({ trigger: "converge" });
+  ambient.resetAndApply();
 });
 
 function openModal() {
@@ -347,7 +349,7 @@ const blackboardActions = {
 };
 
 const ambientActions = {
-  "ambient-preview": () => ambient.resetAndApply({ trigger: "converge" }),
+  "ambient-preview": () => ambient.resetAndApply(),
   "ambient-remove": () => ambient.remove(),
 };
 
@@ -359,8 +361,8 @@ document.querySelectorAll("[data-action]").forEach((button) => {
   });
 });
 
-[elements.ambientHoldSelect, elements.ambientExplosionSelect, elements.ambientAlphaSelect, elements.ambientDensityRange, elements.ambientSpeedRange, elements.ambientPullRange, elements.ambientSpreadRange, elements.ambientDriftRange, elements.ambientDriftSpeedRange, elements.ambientIntensityRange, elements.ambientParticleShapeSelect, elements.ambientColorModeSelect, elements.ambientBaseColor, elements.ambientShapeColor, elements.ambientExplodeColor, elements.ambientPaletteSelect, elements.ambientSizeMinRange, elements.ambientSizeMaxRange, elements.ambientSizeHoldRange, elements.ambientChaosRange, elements.ambientConvergeRange, elements.ambientHoldDurationRange, elements.ambientExplodeDurationRange].forEach((control) => {
-  control.addEventListener("change", () => ambient.resetAndApply({ trigger: "converge" }));
+[elements.ambientCycleModeSelect, elements.ambientDecomposeSelect, elements.ambientHoldSelect, elements.ambientAlphaSelect, elements.ambientDensityRange, elements.ambientSpeedRange, elements.ambientPullRange, elements.ambientSpreadRange, elements.ambientDriftRange, elements.ambientDriftSpeedRange, elements.ambientIntensityRange, elements.ambientParticleShapeSelect, elements.ambientColorModeSelect, elements.ambientBaseColor, elements.ambientShapeColor, elements.ambientExplodeColor, elements.ambientPaletteSelect, elements.ambientSizeMinRange, elements.ambientSizeMaxRange, elements.ambientSizeHoldRange, elements.ambientChaosRange, elements.ambientConvergeRange, elements.ambientHoldDurationRange, elements.ambientExplodeDurationRange].forEach((control) => {
+  control.addEventListener("change", () => ambient.resetAndApply());
 });
 
 elements.ambientAsciiFile.addEventListener("change", async (event) => {
@@ -370,22 +372,22 @@ elements.ambientAsciiFile.addEventListener("change", async (event) => {
   elements.ambientTargetSelect.value = "uploaded-ascii";
   updateAmbientTargetFields();
   setStatus(`Loaded ASCII target <strong>${file.name}</strong>.`);
-  ambient.resetAndApply({ trigger: "converge" });
+  ambient.resetAndApply();
 });
 
 elements.ambientLibraryCategorySelect.addEventListener("change", () => {
   populateLibrarySubcategories();
-  if (elements.ambientTargetSelect.value === "library-ascii") ambient.resetAndApply({ trigger: "converge" });
+  if (elements.ambientTargetSelect.value === "library-ascii") ambient.resetAndApply();
 });
 
 elements.ambientLibrarySubcategorySelect.addEventListener("change", () => {
   populateLibraryArtSelect();
-  if (elements.ambientTargetSelect.value === "library-ascii") ambient.resetAndApply({ trigger: "converge" });
+  if (elements.ambientTargetSelect.value === "library-ascii") ambient.resetAndApply();
 });
 
 elements.ambientLibraryArtSelect.addEventListener("change", () => {
   syncLibraryPreview();
-  if (elements.ambientTargetSelect.value === "library-ascii") ambient.resetAndApply({ trigger: "converge" });
+  if (elements.ambientTargetSelect.value === "library-ascii") ambient.resetAndApply();
 });
 
 function hideBoardContextMenu() {

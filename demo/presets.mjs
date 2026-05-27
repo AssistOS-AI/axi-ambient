@@ -37,6 +37,10 @@ export const backgroundPresets = {
 };
 
 export const alphaPresets = {
+  none: {
+    alphaField: { type: "none", stops: [{ pos: 0, alpha: 1 }, { pos: 1, alpha: 1 }] },
+    alphaMasks: [],
+  },
   vertical: {
     alphaField: { type: "vertical", stops: [{ pos: 0, alpha: 0.04 }, { pos: 0.4, alpha: 0.12 }, { pos: 1, alpha: 0.9 }] },
     alphaMasks: [],

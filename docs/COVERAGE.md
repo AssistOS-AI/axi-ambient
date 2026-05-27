@@ -27,18 +27,18 @@ This document tracks the current implementation coverage against the intended co
 | SVG-raster target sampling | Gap | Not implemented yet. |
 | Particle size distribution | Complete | Fixed, random, uniform, gaussian, weighted. |
 | Palette and state-based coloring | Complete | Includes normal/shape/explode palette selection. |
-| Alpha field gradients | Complete | `vertical`, `horizontal`, `radial`, `linear`. |
+| Alpha field gradients | Complete | `none`, `vertical`, `horizontal`, `radial`, `linear`. |
 | Local alpha masks with feather | Complete | Implemented through normalized box masks. |
 | Pointer interaction | Complete | Pointer repulsion is implemented when enabled. |
 | Reduced-motion support | Complete | `auto`, `reduce`, `static`, `off` are supported. |
 | `ResizeObserver` handling | Complete | Canvas is resized to the host box. |
 | `IntersectionObserver` pause/resume | Complete | RAF loop pauses when not visible. |
-| DPR cap | Complete | Device pixel ratio is capped at `2`. |
+| DPR cap | Complete | Device pixel ratio is capped to a safer range (`1` under reduced motion, otherwise `1.5`). |
 | Target caching | Complete | `TargetSampler` caches generated point clouds. |
 | Neighbor-grid optimization | Gap | No spatial optimization grid exists yet. |
 | Public API surface | Complete | `configure`, setters, phase methods, lifecycle methods. |
 | Event bus adapter (`axi-command`) | Complete | `run()` is wired through `axi-command`. |
-| Demo control surface | Complete | The demo under `demo/` exposes live settings, lifecycle buttons, and alpha-mask presets. |
+| Demo control surface | Complete | The demo under `demo/` exposes live settings, imported ASCII library browsing, optional alpha presets, pulse/fixed cycle control, decomposition modes, and rebuilt-on-change previews. |
 
 ---
 

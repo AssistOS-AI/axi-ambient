@@ -9,18 +9,18 @@ const DEFAULT_CONFIG = {
   message: "AXI AMBIENT",
   shape: "circle",
   points: [],
-  speed: 0.9,
-  intensity: 0.65,
+  speed: 0.85,
+  intensity: 0.72,
   interactive: true,
   motion: "auto",
   cycle: {
     auto: true,
     loop: true,
-    chaosDuration: 1500,
-    convergeDuration: 1700,
-    holdDuration: 2200,
-    explodeDuration: 1200,
-    returnDuration: 420,
+    chaosDuration: 420,
+    convergeDuration: 1100,
+    holdDuration: 1800,
+    explodeDuration: 650,
+    returnDuration: 260,
     explodeEnabled: true,
   },
   converge: {
@@ -31,9 +31,9 @@ const DEFAULT_CONFIG = {
   hold: {
     mode: "jitter",
     duration: 2200,
-    jitterAmplitude: 1.4,
-    jitterSpeed: 0.8,
-    spreadRadius: 0,
+    jitterAmplitude: 2.1,
+    jitterSpeed: 0.9,
+    spreadRadius: 12,
   },
   explosion: {
     mode: "radial",
@@ -44,7 +44,7 @@ const DEFAULT_CONFIG = {
     direction: { x: 1, y: -0.2 },
   },
   particle: {
-    count: 800,
+    count: 700,
     size: null,
     sizeMin: 0.8,
     sizeMax: 2.8,
@@ -57,7 +57,7 @@ const DEFAULT_CONFIG = {
     colorOnShape: ["#ffffff", "#bfdbfe", "#93c5fd"],
     colorOnExplode: ["#ffffff", "#fca5a5", "#fef08a"],
     colorMode: "random-palette",
-    alphaBase: 0.75,
+    alphaBase: 0.72,
   },
   target: {
     densityMode: "weighted",
@@ -66,11 +66,10 @@ const DEFAULT_CONFIG = {
     padding: 0.12,
   },
   alphaField: {
-    type: "vertical",
+    type: "none",
     stops: [
-      { pos: 0, alpha: 0.05 },
-      { pos: 0.35, alpha: 0.12 },
-      { pos: 1, alpha: 0.9 },
+      { pos: 0, alpha: 1 },
+      { pos: 1, alpha: 1 },
     ],
   },
   alphaMasks: [],
@@ -203,6 +202,7 @@ class AlphaField {
 
   _global(nx, ny) {
     const type = this.config.type || "vertical";
+    if (type === "none") return 1;
     let t = ny;
     if (type === "horizontal") t = nx;
     if (type === "radial") {
@@ -633,6 +633,40 @@ class ParticleEngine {
     }
   }
 
+  _holdOffset(particle, mode, radius, time, tangentX, tangentY) {
+    if (radius <= 0 || mode === "static" || mode === "none") return { x: 0, y: 0 };
+    const orbitTime = time * 1.4;
+    if (mode === "orbit") {
+      return {
+        x: Math.cos(particle.seed + orbitTime) * radius,
+        y: Math.sin(particle.seed * 0.9 + orbitTime) * radius,
+      };
+    }
+    if (mode === "figure-8") {
+      return {
+        x: Math.sin(particle.seed + orbitTime * 1.1) * radius,
+        y: Math.sin(particle.seed * 0.6 + orbitTime * 2.2) * radius * 0.58,
+      };
+    }
+    if (mode === "flow-on-shape") {
+      const swing = Math.sin(particle.seed + orbitTime);
+      return {
+        x: tangentX * radius * swing,
+        y: tangentY * radius * swing,
+      };
+    }
+    return {
+      x: (
+        Math.sin(particle.seed * 1.13 + orbitTime * 1.8) * 0.7
+        + Math.cos(particle.seed * 0.47 + orbitTime * 1.1) * 0.3
+      ) * radius,
+      y: (
+        Math.cos(particle.seed * 0.91 + orbitTime * 1.5) * 0.7
+        + Math.sin(particle.seed * 0.62 + orbitTime * 1.2) * 0.3
+      ) * radius,
+    };
+  }
+
   update(dtMs, phase, stateTimeMs, width, height, colorGetter) {
     const dt = Math.min(0.035, dtMs / 1000);
     const speedMul = this.config.speed * (this.config._reduced ? 0.45 : 1);
@@ -640,15 +674,33 @@ class ParticleEngine {
     const convergeForce = this.config.converge?.force ?? 3.2;
     const distanceFactor = this.config.converge?.distanceFactor ?? 0.025;
     const maxV = this.config.converge?.maxVelocity ?? 10;
+    const timeMs = performance.now();
+    const timeSeconds = timeMs * 0.001;
+    const holdRadius = this.config.hold?.spreadRadius ?? 0;
+    const holdStrength = this.config.hold?.jitterAmplitude ?? 0;
+    const holdSpeed = Math.max(0.05, this.config.hold?.jitterSpeed ?? 1);
     for (let i = 0; i < this.particles.length; i += 1) {
       const p = this.particles[i];
       let targetX = p.tx;
       let targetY = p.ty;
-      if (phase === PHASE.HOLD && (this.config.hold?.spreadRadius ?? 0) > 0) {
-        const spread = this.config.hold.spreadRadius;
-        const wobble = performance.now() * 0.001 * Math.max(0.1, this.config.hold.jitterSpeed || 1);
-        targetX += Math.cos(p.seed + wobble * 0.9) * spread;
-        targetY += Math.sin(p.seed * 1.2 + wobble * 1.1) * spread;
+      let holdOffsetX = 0;
+      let holdOffsetY = 0;
+      if (phase === PHASE.HOLD && holdRadius > 0) {
+        const baseDx = p.tx - p.x;
+        const baseDy = p.ty - p.y;
+        const baseDist = Math.hypot(baseDx, baseDy) + 1e-5;
+        const offset = this._holdOffset(
+          p,
+          this.config.hold.mode,
+          holdRadius,
+          timeSeconds * holdSpeed,
+          -baseDy / baseDist,
+          baseDx / baseDist,
+        );
+        holdOffsetX = offset.x;
+        holdOffsetY = offset.y;
+        targetX += holdOffsetX;
+        targetY += holdOffsetY;
       }
       const toTargetX = targetX - p.x;
       const toTargetY = targetY - p.y;
@@ -657,44 +709,48 @@ class ParticleEngine {
       const ny = toTargetY / dist;
       let ax = 0;
       let ay = 0;
-      const drift = Math.sin((performance.now() * 0.0004 + p.seed) * 2);
+      const drift = Math.sin((timeMs * 0.0004 + p.seed) * 2);
       if (phase === PHASE.CHAOS || phase === PHASE.RETURN) {
-        ax += Math.cos(p.seed + performance.now() * 0.001) * 0.35;
-        ay += Math.sin(p.seed + performance.now() * 0.0013) * 0.35;
+        ax += Math.cos(p.seed + timeSeconds) * 0.32;
+        ay += Math.sin(p.seed + timeSeconds * 1.3) * 0.32;
       }
       if (phase === PHASE.CONVERGE || phase === PHASE.HOLD || phase === PHASE.EXPLODE) {
-        const holdPull = phase === PHASE.HOLD ? 0.24 : 1;
+        const fixedHold = phase === PHASE.HOLD && ["none", "static"].includes(this.config.hold?.mode);
+        const holdPull = phase === PHASE.HOLD ? (fixedHold ? 0.92 : 0.58) : 1;
         const attraction = (convergeForce + Math.min(12, dist * distanceFactor)) * holdPull;
         ax += nx * attraction;
         ay += ny * attraction;
       }
       if (phase === PHASE.HOLD) {
         const holdMode = this.config.hold.mode;
-        const amp = this.config.hold.jitterAmplitude;
-        if (holdMode === "orbit") {
-          const a = p.seed + performance.now() * 0.0015 * this.config.hold.jitterSpeed;
-          ax += Math.cos(a) * amp * 0.8;
-          ay += Math.sin(a) * amp * 0.8;
-        } else if (holdMode === "flow-on-shape") {
-          ax += -ny * amp * 0.7;
-          ay += nx * amp * 0.7;
-        } else if (holdMode === "jitter") {
-          ax += (this._rand() - 0.5) * amp;
-          ay += (this._rand() - 0.5) * amp;
+        const boost = holdStrength * 0.18;
+        if (holdMode === "flow-on-shape") {
+          ax += -ny * holdStrength * 0.42;
+          ay += nx * holdStrength * 0.42;
+        } else if (holdMode !== "static" && holdMode !== "none") {
+          ax += holdOffsetX * boost;
+          ay += holdOffsetY * boost;
         }
         p.size = p.size * 0.96 + p.size * this.config.particle.sizeOnHold * 0.04;
       }
       if (phase === PHASE.EXPLODE && !this.config._reduced) {
         const elapsed = stateTimeMs / 1000;
-        if (elapsed >= p.explodeDelay) {
+        const mode = this.config.explosion.mode;
+        const orderedDelay = (i / Math.max(1, this.particles.length - 1)) * this.config.explosion.stagger;
+        const explodeDelay = mode === "ordered" ? orderedDelay : p.explodeDelay;
+        if (elapsed >= explodeDelay) {
           const force = this.config.explosion.force;
           const spread = this.config.explosion.spread;
-          const mode = this.config.explosion.mode;
           if (mode === "directional") {
             const dir = this.config.explosion.direction || { x: 1, y: 0 };
             const noise = (this._rand() - 0.5) * spread;
             ax += dir.x * force + noise;
             ay += dir.y * force + noise;
+          } else if (mode === "ordered") {
+            const direction = i % 2 === 0 ? 1 : -1;
+            const band = ((i % 7) - 3) / 3;
+            ax += direction * force * 0.9;
+            ay += band * force * 0.55;
           } else {
             const centerX = width * 0.5;
             const centerY = height * 0.5;
@@ -730,8 +786,11 @@ class ParticleEngine {
         ax += (px / d) * m;
         ay += (py / d) * m;
       }
-      ax += drift * 0.08;
-      ay += Math.cos(drift) * 0.08;
+      const ambientNoise = phase === PHASE.HOLD
+        ? (["none", "static"].includes(this.config.hold?.mode) ? 0 : 0.04)
+        : 0.08;
+      ax += drift * ambientNoise;
+      ay += Math.cos(drift) * ambientNoise;
       p.vx = p.vx * damping + ax * dt * speedMul;
       p.vy = p.vy * damping + ay * dt * speedMul;
       p.vx = clamp(p.vx, -maxV, maxV);
@@ -802,7 +861,7 @@ class Renderer2D {
       this._drawShape(ctx, renderShape, p.x, p.y, p.size);
       ctx.fill();
     }
-    if (intensity > 0.82) {
+    if (intensity > 1.04 && !config?._reduced) {
       ctx.strokeStyle = "rgba(148, 163, 184, 0.08)";
       for (let i = 0; i < engine.particles.length; i += 12) {
         const p = engine.particles[i];
@@ -1078,6 +1137,7 @@ class AxiAmbientElement extends HTMLElement {
       c.cycle.holdDuration = c.hold.duration;
     }
     if (c.alphaField?.type === "curve") c.alphaField.type = "linear";
+    if (c.alphaField?.type === "off") c.alphaField.type = "none";
   }
 
   _applyDeclarativeAttributes() {
@@ -1190,7 +1250,7 @@ class AxiAmbientElement extends HTMLElement {
     const rect = this.getBoundingClientRect();
     const width = Math.max(1, Math.floor(rect.width));
     const height = Math.max(1, Math.floor(rect.height));
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, this._config._reduced ? 1 : 1.5);
     this._dpr = dpr;
     this._canvas.width = Math.floor(width * dpr);
     this._canvas.height = Math.floor(height * dpr);

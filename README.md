@@ -32,7 +32,8 @@ Open `demo.html` directly in a browser, or serve the repository through a small 
 - shape targets (`circle`, `spiral`, `wave`, `grid`, `heart`, `star`, `infinity`, `speech`, `rocket`, `trophy`, `smile`, `arrow-up`, `network`, `community`)
 - explicit point targets
 - phase control (`chaos`, `converge`, `hold`, `explode`, `return`)
-- alpha gradients and local alpha masks
+- optional alpha gradients and local alpha masks
+- pulse/fixed cycle control plus imported ASCII-library targets in the demo
 - reduced-motion handling
 - declarative attributes and programmatic control
 

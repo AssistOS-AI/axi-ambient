@@ -153,28 +153,37 @@
                 </div>
 
                 <label class="field">
-                  <span>Hold mode</span>
-                  <select id="ambientHoldSelect">
-                    <option value="jitter">jitter</option>
-                    <option value="static">static</option>
-                    <option value="orbit">orbit</option>
-                    <option value="flow-on-shape">flow-on-shape</option>
+                  <span>Cycle</span>
+                  <select id="ambientCycleModeSelect">
+                    <option value="pulse">pulse</option>
+                    <option value="fixed">fixed shape</option>
                   </select>
                 </label>
 
                 <label class="field">
-                  <span>Explosion</span>
-                  <select id="ambientExplosionSelect">
-                    <option value="burst-wave">burst-wave</option>
-                    <option value="radial">radial</option>
-                    <option value="random">random</option>
-                    <option value="directional">directional</option>
+                  <span>Decompose</span>
+                  <select id="ambientDecomposeSelect">
+                    <option value="explode">explode</option>
+                    <option value="ordered">ordered</option>
+                    <option value="scatter">scatter</option>
+                  </select>
+                </label>
+
+                <label class="field">
+                  <span>Target motion</span>
+                  <select id="ambientHoldSelect">
+                    <option value="none">none</option>
+                    <option value="jitter">jitter</option>
+                    <option value="orbit">orbit</option>
+                    <option value="figure-8">figure-8</option>
+                    <option value="flow-on-shape">flow-on-shape</option>
                   </select>
                 </label>
 
                 <label class="field">
                   <span>Alpha</span>
                   <select id="ambientAlphaSelect">
+                    <option value="none">none</option>
                     <option value="vertical">vertical</option>
                     <option value="horizontal">horizontal</option>
                     <option value="radial">radial</option>
@@ -185,46 +194,73 @@
                 </label>
 
                 <label class="field">
-                  <span>Density <strong id="ambientDensityValue">2200</strong></span>
-                  <input id="ambientDensityRange" type="range" min="200" max="8000" step="100" value="2200" />
-                </label>
-              </div>
-            </section>
-
-            <section class="accordion">
-              <button class="accordion-toggle" type="button" aria-expanded="false">
-                <span>Behavior</span>
-                <span class="accordion-icon" aria-hidden="true">▾</span>
-              </button>
-              <div class="accordion-body">
-                <label class="field">
-                  <span>Speed <strong id="ambientSpeedValue">2.8x</strong></span>
-                  <input id="ambientSpeedRange" type="range" min="0.5" max="4.5" step="0.1" value="2.8" />
+                  <span>Density <strong id="ambientDensityValue">1400</strong></span>
+                  <input id="ambientDensityRange" type="range" min="200" max="6000" step="100" value="1400" />
                 </label>
 
                 <label class="field">
-                  <span>Converge pull <strong id="ambientPullValue">7.5</strong></span>
-                  <input id="ambientPullRange" type="range" min="2" max="12" step="0.1" value="7.5" />
+                  <span>Speed <strong id="ambientSpeedValue">2.2x</strong></span>
+                  <input id="ambientSpeedRange" type="range" min="0.4" max="4.2" step="0.1" value="2.2" />
                 </label>
 
                 <label class="field">
-                  <span>Roam radius <strong id="ambientSpreadValue">14</strong></span>
-                  <input id="ambientSpreadRange" type="range" min="0" max="36" step="1" value="14" />
+                  <span>Converge pull <strong id="ambientPullValue">8.2</strong></span>
+                  <input id="ambientPullRange" type="range" min="2" max="14" step="0.1" value="8.2" />
                 </label>
 
                 <label class="field">
-                  <span>Roam amplitude <strong id="ambientDriftValue">8</strong></span>
-                  <input id="ambientDriftRange" type="range" min="0" max="24" step="0.5" value="8" />
+                  <span>Target roam radius <strong id="ambientSpreadValue">18</strong></span>
+                  <input id="ambientSpreadRange" type="range" min="0" max="80" step="1" value="18" />
                 </label>
 
                 <label class="field">
-                  <span>Roam speed <strong id="ambientDriftSpeedValue">1.4</strong></span>
-                  <input id="ambientDriftSpeedRange" type="range" min="0" max="3.5" step="0.1" value="1.4" />
+                  <span>Target motion energy <strong id="ambientDriftValue">12</strong></span>
+                  <input id="ambientDriftRange" type="range" min="0" max="32" step="0.5" value="12" />
                 </label>
 
                 <label class="field">
-                  <span>Intensity <strong id="ambientIntensityValue">0.82</strong></span>
-                  <input id="ambientIntensityRange" type="range" min="0.2" max="1.2" step="0.02" value="0.82" />
+                  <span>Target motion speed <strong id="ambientDriftSpeedValue">1.6</strong></span>
+                  <input id="ambientDriftSpeedRange" type="range" min="0" max="4.5" step="0.1" value="1.6" />
+                </label>
+
+                <label class="field">
+                  <span>Intensity <strong id="ambientIntensityValue">0.72</strong></span>
+                  <input id="ambientIntensityRange" type="range" min="0.2" max="1.2" step="0.02" value="0.72" />
+                </label>
+
+                <label class="field">
+                  <span>Converge ms <strong id="ambientConvergeValue">900</strong></span>
+                  <input id="ambientConvergeRange" type="range" min="150" max="3000" step="50" value="900" />
+                </label>
+
+                <label class="field">
+                  <span>Hold ms <strong id="ambientHoldDurationValue">1800</strong></span>
+                  <input id="ambientHoldDurationRange" type="range" min="200" max="5000" step="50" value="1800" />
+                </label>
+
+                <label class="field">
+                  <span>Roam ms <strong id="ambientChaosValue">420</strong></span>
+                  <input id="ambientChaosRange" type="range" min="0" max="3000" step="50" value="420" />
+                </label>
+
+                <label class="field">
+                  <span>Burst ms <strong id="ambientExplodeDurationValue">650</strong></span>
+                  <input id="ambientExplodeDurationRange" type="range" min="100" max="2500" step="50" value="650" />
+                </label>
+
+                <label class="field">
+                  <span>Size min <strong id="ambientSizeMinValue">0.8</strong></span>
+                  <input id="ambientSizeMinRange" type="range" min="0.4" max="6" step="0.1" value="0.8" />
+                </label>
+
+                <label class="field">
+                  <span>Size max <strong id="ambientSizeMaxValue">3.2</strong></span>
+                  <input id="ambientSizeMaxRange" type="range" min="1" max="12" step="0.1" value="3.2" />
+                </label>
+
+                <label class="field">
+                  <span>Hold size boost <strong id="ambientSizeHoldValue">1.28</strong></span>
+                  <input id="ambientSizeHoldRange" type="range" min="0.8" max="2.5" step="0.05" value="1.28" />
                 </label>
               </div>
             </section>
@@ -283,49 +319,6 @@
                     </select>
                   </label>
                 </div>
-
-                <label class="field">
-                  <span>Size min <strong id="ambientSizeMinValue">0.8</strong></span>
-                  <input id="ambientSizeMinRange" type="range" min="0.4" max="6" step="0.1" value="0.8" />
-                </label>
-
-                <label class="field">
-                  <span>Size max <strong id="ambientSizeMaxValue">3.6</strong></span>
-                  <input id="ambientSizeMaxRange" type="range" min="1" max="12" step="0.1" value="3.6" />
-                </label>
-
-                <label class="field">
-                  <span>Hold size boost <strong id="ambientSizeHoldValue">1.35</strong></span>
-                  <input id="ambientSizeHoldRange" type="range" min="0.8" max="2.5" step="0.05" value="1.35" />
-                </label>
-              </div>
-            </section>
-
-            <section class="accordion">
-              <button class="accordion-toggle" type="button" aria-expanded="false">
-                <span>Timing</span>
-                <span class="accordion-icon" aria-hidden="true">▾</span>
-              </button>
-              <div class="accordion-body">
-                <label class="field">
-                  <span>Chaos ms <strong id="ambientChaosValue">500</strong></span>
-                  <input id="ambientChaosRange" type="range" min="0" max="2000" step="50" value="500" />
-                </label>
-
-                <label class="field">
-                  <span>Converge ms <strong id="ambientConvergeValue">850</strong></span>
-                  <input id="ambientConvergeRange" type="range" min="200" max="3000" step="50" value="850" />
-                </label>
-
-                <label class="field">
-                  <span>Hold ms <strong id="ambientHoldDurationValue">1200</strong></span>
-                  <input id="ambientHoldDurationRange" type="range" min="200" max="4000" step="50" value="1200" />
-                </label>
-
-                <label class="field">
-                  <span>Explode ms <strong id="ambientExplodeDurationValue">500</strong></span>
-                  <input id="ambientExplodeDurationRange" type="range" min="150" max="2000" step="50" value="500" />
-                </label>
               </div>
             </section>
 
@@ -336,7 +329,7 @@
               </button>
               <div class="accordion-body">
                 <div class="meta-card" id="ambientMeta">No ambient scene created yet.</div>
-                <div class="meta-card">Any change rebuilds the scene and forces a new converge pass toward the current target.</div>
+                <div class="meta-card">Any change rebuilds the scene and restarts the current pulse or fixed-shape cycle for the selected target.</div>
                 <div class="button-row">
                   <button type="button" data-action="ambient-preview">Preview</button>
                   <button type="button" data-action="ambient-remove" class="danger">Remove</button>

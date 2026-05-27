@@ -86,9 +86,12 @@ The demo adds:
 - popup-based custom element creation,
 - curated SDK, protocol, and ambient scenarios reachable from the board context menu,
 - an empty-by-default start state for both the blackboard editor and the ambient playground,
-- ambient setting changes that rebuild the demo scene and reconverge to the chosen target,
-- slider-driven behavior/timing controls for ambient speed, pull strength, roaming, particle sizing, and phase durations instead of a large action button bank,
-- uploaded ASCII targets and extended demo-facing predefined shape targets for ambient exploration.
+- ambient setting changes that rebuild the demo scene and restart the selected pulse or fixed-shape cycle,
+- a single Settings accordion that now owns all Ambient sliders,
+- optional alpha presets with `none` as the default selection in the demo,
+- pulse/fixed cycle control plus configurable decomposition modes (`explode`, `ordered`, `scatter`),
+- stronger near-target roaming controls for hold motion type, radius, energy, and speed,
+- uploaded ASCII targets, imported ASCII-library targets, and extended demo-facing predefined shape targets for ambient exploration.
 
 These behaviors are valid for the demo, but they are not public API guarantees of the reusable components unless separately documented as such.
 

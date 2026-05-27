@@ -29,19 +29,20 @@ function buildPalette(hex) {
 
 function holdConfig(mode, settings) {
   return {
-    static: { mode: "static", jitterAmplitude: 0, jitterSpeed: 0, spreadRadius: settings.spread },
+    none: { mode: "none", jitterAmplitude: 0, jitterSpeed: 0, spreadRadius: 0 },
+    static: { mode: "static", jitterAmplitude: 0, jitterSpeed: 0, spreadRadius: 0 },
     jitter: { mode: "jitter", jitterAmplitude: settings.driftAmplitude, jitterSpeed: settings.driftSpeed, spreadRadius: settings.spread },
-    orbit: { mode: "orbit", jitterAmplitude: settings.driftAmplitude * 0.8, jitterSpeed: settings.driftSpeed * 1.1, spreadRadius: settings.spread },
-    "flow-on-shape": { mode: "flow-on-shape", jitterAmplitude: settings.driftAmplitude * 0.7, jitterSpeed: settings.driftSpeed, spreadRadius: settings.spread },
+    orbit: { mode: "orbit", jitterAmplitude: settings.driftAmplitude * 1.05, jitterSpeed: settings.driftSpeed * 1.05, spreadRadius: settings.spread },
+    "figure-8": { mode: "figure-8", jitterAmplitude: settings.driftAmplitude, jitterSpeed: settings.driftSpeed * 0.95, spreadRadius: settings.spread },
+    "flow-on-shape": { mode: "flow-on-shape", jitterAmplitude: settings.driftAmplitude * 0.9, jitterSpeed: settings.driftSpeed, spreadRadius: settings.spread },
   }[mode] || { mode: "jitter", jitterAmplitude: settings.driftAmplitude, jitterSpeed: settings.driftSpeed, spreadRadius: settings.spread };
 }
 
 function explosionConfig(mode) {
   return {
-    radial: { mode: "radial", force: 1.8, spread: 0.28 },
-    random: { mode: "random", force: 2.15, spread: 0.45 },
-    directional: { mode: "directional", force: 1.8, spread: 0.34, direction: { x: 1, y: -0.2 } },
-    "burst-wave": { mode: "burst-wave", force: 2.05, spread: 0.4, stagger: 0.36 },
+    explode: { mode: "burst-wave", force: 2.05, spread: 0.4, stagger: 0.36 },
+    ordered: { mode: "ordered", force: 1.7, spread: 0.25, stagger: 0.42 },
+    scatter: { mode: "random", force: 1.2, spread: 0.32, stagger: 0.18 },
   }[mode] || { mode: "burst-wave", force: 2.05, spread: 0.4, stagger: 0.36 };
 }
 
@@ -50,6 +51,31 @@ function convergeConfig(force) {
     force,
     distanceFactor: clamp(force * 0.006, 0.01, 0.08),
     maxVelocity: clamp(force * 1.9, 6, 24),
+  };
+}
+
+function alphaConfig(name) {
+  if (name === "none") {
+    return {
+      alphaField: { type: "none", stops: [{ pos: 0, alpha: 1 }, { pos: 1, alpha: 1 }] },
+      alphaMasks: [],
+    };
+  }
+  return alphaPresets[name] || alphaPresets.none;
+}
+
+function cycleConfig(settings) {
+  const fixed = settings.cycleMode === "fixed";
+  const explodeLike = !fixed && ["explode", "ordered"].includes(settings.decompose);
+  return {
+    auto: true,
+    loop: !fixed,
+    chaosDuration: fixed ? 0 : settings.chaosDuration,
+    convergeDuration: settings.convergeDuration,
+    holdDuration: settings.holdDuration,
+    explodeDuration: explodeLike ? settings.explodeDuration : 0,
+    returnDuration: fixed ? 0 : (explodeLike ? Math.max(160, Math.round(settings.explodeDuration * 0.35)) : 0),
+    explodeEnabled: explodeLike,
   };
 }
 
@@ -120,7 +146,7 @@ export class AmbientPlayground {
   applySettings({ trigger = null, autoStart = false, reset = false } = {}) {
     const element = this.ensureElement({ reset });
     const settings = this.getSettings();
-    const alpha = alphaPresets[settings.alpha] || alphaPresets.vertical;
+    const alpha = alphaConfig(settings.alpha);
 
     if (settings.target === "ascii-axi") {
       element.setAscii(asciiTargets.axi);
@@ -159,18 +185,9 @@ export class AmbientPlayground {
         color: paletteSeed.base,
       },
       converge: convergeConfig(settings.pull),
-      cycle: {
-        auto: true,
-        loop: true,
-        chaosDuration: settings.chaosDuration,
-        convergeDuration: settings.convergeDuration,
-        holdDuration: settings.holdDuration,
-        explodeDuration: settings.explodeDuration,
-        returnDuration: Math.max(180, Math.round(settings.explodeDuration * 0.5)),
-        explodeEnabled: true,
-      },
+      cycle: cycleConfig(settings),
       hold: holdConfig(settings.hold, settings),
-      explosion: explosionConfig(settings.explosion),
+      explosion: explosionConfig(settings.decompose),
       alphaField: alpha.alphaField,
       alphaMasks: alpha.alphaMasks,
     });
@@ -178,10 +195,10 @@ export class AmbientPlayground {
     this.runTrigger(trigger, autoStart);
 
     this.renderState();
-    this.onStatus(`Ambient settings applied: <strong>${settings.target}</strong>, density <strong>${settings.density}</strong>, speed <strong>${settings.speed.toFixed(1)}</strong>x.`);
+    this.onStatus(`Ambient settings applied: <strong>${settings.target}</strong>, density <strong>${settings.density}</strong>, cycle <strong>${settings.cycleMode}</strong>.`);
   }
 
-  resetAndApply({ trigger = "converge", autoStart = false } = {}) {
+  resetAndApply({ trigger = null, autoStart = true } = {}) {
     this.applySettings({ trigger, autoStart, reset: true });
   }
 
@@ -191,15 +208,15 @@ export class AmbientPlayground {
   }
 
   converge() {
-    this.resetAndApply({ trigger: "converge" });
+    this.resetAndApply({ trigger: "converge", autoStart: false });
   }
 
   hold() {
-    this.resetAndApply({ trigger: "hold" });
+    this.resetAndApply({ trigger: "hold", autoStart: false });
   }
 
   explode() {
-    this.resetAndApply({ trigger: "explode" });
+    this.resetAndApply({ trigger: "explode", autoStart: false });
   }
 
   scatter() {
